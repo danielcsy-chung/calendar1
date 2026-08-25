@@ -10,13 +10,13 @@ const PALETTE = ['#5b8def','#e0685f','#3fb984','#e0a63f','#a06fe0',
 
 /* UI colour schemes. Each id matches a html[data-theme="…"] block in styles.css */
 const THEMES = [
-  { id:'night',  name:'Night',  dark:true,  swatch:['#15141a','#ffb454','#5fd39b'] },
-  { id:'ocean',  name:'Ocean',  dark:true,  swatch:['#0c1a20','#49cfc2','#8ad98e'] },
-  { id:'plum',   name:'Plum',   dark:true,  swatch:['#171020','#ff92bc','#7bdca2'] },
-  { id:'forest', name:'Forest', dark:true,  swatch:['#0f1510','#c9e666','#63d79d'] },
-  { id:'mono',   name:'Mono',   dark:true,  swatch:['#0b0b0c','#e9e9ec','#8ee0aa'] },
-  { id:'paper',  name:'Paper',  dark:false, swatch:['#f6f2ea','#c2701c','#2c8b5c'] },
-  { id:'linen',  name:'Linen',  dark:false, swatch:['#edf0f5','#4a61d6','#1d8c5f'] }
+  { id:'notebook', name:'Notebook', dark:true,  note:'warm graphite, cream ink',  swatch:['#1a1816','#d9a441','#7fb287'] },
+  { id:'carbon',   name:'Carbon',   dark:true,  note:'lowest glare, soft whites', swatch:['#121315','#8fb4d9','#7dbd97'] },
+  { id:'night',    name:'Night',    dark:true,  note:'warm charcoal',             swatch:['#15141a','#ffb454','#5fd39b'] },
+  { id:'ocean',    name:'Ocean',    dark:true,  note:'deep teal',                 swatch:['#0c1a20','#49cfc2','#8ad98e'] },
+  { id:'forest',   name:'Forest',   dark:true,  note:'dark green',                swatch:['#0f1510','#c9e666','#63d79d'] },
+  { id:'mono',     name:'Mono',     dark:true,  note:'black and white',           swatch:['#0b0b0c','#e9e9ec','#8ee0aa'] },
+  { id:'paper',    name:'Paper',    dark:false, note:'the only light one',        swatch:['#f6f2ea','#c2701c','#2c8b5c'] }
 ];
 function themeById(id){ return THEMES.find(t => t.id === id) || THEMES[0]; }
 
@@ -96,14 +96,19 @@ function blankState(){
     sessions: [],            // see newSession()
     plans: [],               // {id,title,date,start,end,notes,color} — calendar-only reminders
     log: {},                 // log[dateKey][hour][subjectId] = seconds studied
+    rev: 0,                  // bumped on every local change; decides who wins a sync
     settings: {
       weeklyGoalHours: 40,
       defaultHours: 4,
       showClock: true,
       clock24: false,
-      theme: 'night',
+      theme: 'notebook',
       accent: null,          // overrides the theme's accent when set
       autoPiP: true,
+      syncCode: null,
+      autoSync: true,
+      lastPush: null,
+      lastPull: null,
       firstRunDone: false
     }
   };
@@ -139,7 +144,10 @@ const Store = {
     return this.state;
   },
 
-  save(){
+  /* pass bump === false to save without claiming a newer revision
+     (used when writing a copy pulled down from the cloud) */
+  save(bump){
+    if(bump !== false) this.state.rev = Date.now();
     try{ localStorage.setItem(KEY, JSON.stringify(this.state)); }
     catch(e){ toast('Storage is full — export a backup and clear old sessions.', true); }
   },

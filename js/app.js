@@ -77,9 +77,10 @@ const App = {
         el('p', { html: '<b style="color:var(--chalk)">1.</b> Import your timetable, subjects and deadlines from one CSV. Setup has a format guide you can hand to Claude — paste your raw schedule in, paste the result back.' }),
         el('p', { html: '<b style="color:var(--chalk)">2.</b> Add tasks. Due dates can be "next class" or "the class after that" — worked out from your timetable.' }),
         el('p', { html: '<b style="color:var(--chalk)">3.</b> Plan a session on the 5-minute grid, press start, and the red line tracks you through it.' }),
-        el('p', { style: { marginBottom: 0 }, text: 'Everything is stored in this browser only. Export a backup from Setup now and then.' })
+        el('p', { style: { marginBottom: 0 }, html: 'Data lives in this browser. To open it on your phone, set a <b style="color:var(--chalk)">sync code</b> in Setup and enter the same code there.' })
       ]),
       actions: [
+        { label: 'I have a sync code', onClick: c => { c(); App.go('settings'); setTimeout(() => Settings.syncDialog(), 250); } },
         { label: 'Load sample data', onClick: c => { c(); App.go('settings'); setTimeout(() => toast('Hit "Load a sample" under the format guide.'), 300); } },
         { label: 'Go to setup', cls: 'primary', onClick: c => { c(); App.go('settings'); } }
       ]
@@ -91,7 +92,7 @@ const App = {
   boot(){
     Store.load();
     if(!themeById(Store.state.settings.theme) || !THEMES.some(t => t.id === Store.state.settings.theme)){
-      Store.state.settings.theme = 'night';       // migrate the old dark/light values
+      Store.state.settings.theme = 'notebook';    // migrate old or retired theme ids
     }
     App.applyTheme();
     document.documentElement.style.setProperty('--slot', (Store.state.settings.slotPx || 13) + 'px');
@@ -113,6 +114,8 @@ const App = {
     App.render();
     App.tick();
     setInterval(() => App.tick(), 1000);
+
+    Sync.boot();
 
     if(!Store.state.settings.firstRunDone) setTimeout(() => App.welcome(), 400);
   }

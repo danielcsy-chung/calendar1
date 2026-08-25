@@ -43,6 +43,7 @@ const Settings = {
       text: 'Everything lives in this browser. Nothing is uploaded anywhere.' }));
 
     const grid = el('div.set-grid', {}, [
+      this.syncCard(),
       this.appearanceCard(),
       this.importCard(),
       this.guideCard(),
@@ -56,6 +57,86 @@ const Settings = {
     return page;
   },
 
+  /* ---------- sync ---------- */
+  syncDialog(){
+    const code = textInput(Sync.code(), 'at least 8 characters');
+    code.autocapitalize = 'off'; code.spellcheck = false;
+    modal({
+      title: 'Sync code',
+      body: el('div', {}, [
+        el('p', { style: { margin: '0 0 12px', color: 'var(--mist)', fontSize: '12.5px', lineHeight: '1.55' },
+          text: 'One code, both devices. Set it here, type the same thing on your phone, and pull. Anyone with this code has your data, so make it long and keep it to yourself.' }),
+        field('Code', code),
+        el('button.btn.sm', { text: 'Generate one for me', onclick: () => { code.value = Sync.makeCode(); } })
+      ]),
+      actions: [
+        { label: 'Cancel', onClick: c => c() },
+        { label: 'Save code', cls: 'primary', onClick: c => {
+          const v = code.value.trim();
+          if(v.length < 8){ toast('Eight characters minimum.', true); return; }
+          Store.state.settings.syncCode = v;
+          Store.save(false);
+          c(); App.render();
+          toast('Code saved. Send or load from the sync panel.');
+        }}
+      ]
+    });
+  },
+
+  syncCard(){
+    const st = Store.state.settings;
+    const card = el('div.card.set-card');
+
+    const draw = () => {
+      clear(card);
+      const on = Sync.configured();
+      const auto = el('input', { type: 'checkbox' });
+      auto.checked = st.autoSync !== false;
+      auto.addEventListener('change', () => { st.autoSync = auto.checked; Store.save(false); });
+
+      const stamp = t => t ? new Date(t).toLocaleString() : 'never';
+
+      card.appendChild(el('h3', { text: 'Sync across devices' }));
+      card.appendChild(el('p.hint', { text: on
+        ? 'Open this site on your phone, enter the same code, and load. Whichever device saved last wins \u2014 there is no merging.'
+        : 'Set a code and your data goes to the ibcal-blob store. The same code on any other device pulls it down.' }));
+
+      card.appendChild(el('div.mini-item', { style: { marginBottom: '10px' } }, [
+        el('i.dot', { style: { background: on ? 'var(--green)' : 'var(--mist-dim)' } }),
+        el('span.mono', { text: on ? Sync.code() : 'no code set' }),
+        el('span.spacer'),
+        el('button.btn.sm', { text: on ? 'Change' : 'Set code', onclick: () => Settings.syncDialog() })
+      ]));
+
+      if(on){
+        card.appendChild(el('div', { style: { fontSize: '11.5px', color: 'var(--mist)', marginBottom: '10px' } }, [
+          el('div', { text: 'Last sent: ' + stamp(st.lastPush) }),
+          el('div', { text: 'Last loaded: ' + stamp(st.lastPull) })
+        ]));
+        card.appendChild(el('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap' } }, [
+          el('button.btn.primary', { text: Sync.busy ? 'Working\u2026' : 'Send this device up', disabled: Sync.busy,
+            onclick: () => Sync.push().then(draw) }),
+          el('button.btn', { text: 'Load from code', onclick: () => {
+            confirmDialog('Replace what is on this device?',
+              'Everything here is overwritten by the cloud copy.', 'Load', () => Sync.pull().then(draw));
+          }}),
+          el('button.btn.sm.danger', { text: 'Delete cloud copy', onclick: () => {
+            confirmDialog('Delete the cloud copy?',
+              'This device keeps its data. Other devices will have nothing to pull.', 'Delete', () => Sync.forget().then(draw));
+          }})
+        ]));
+        card.appendChild(el('div.hr'));
+        card.appendChild(el('label.mini-item', { style: { cursor: 'pointer' } }, [
+          auto, el('span', { text: 'Sync automatically in the background' })
+        ]));
+      }
+    };
+
+    draw();
+    Sync.onStatus = () => { if(document.body.contains(card)) draw(); };
+    return card;
+  },
+
   /* ---------- appearance ---------- */
   appearanceCard(){
     const st = Store.state.settings;
@@ -66,7 +147,8 @@ const Settings = {
         onclick: () => { App.setTheme(t.id); App.render(); }
       }, [
         el('span.theme-strip', {}, t.swatch.map(c => el('i', { style: { background: c } }))),
-        el('span.theme-name', { text: t.name })
+        el('span.theme-name', { text: t.name }),
+        el('span.theme-note', { text: t.note || '' })
       ]);
       return b;
     }));
@@ -92,7 +174,7 @@ const Settings = {
 
     return el('div.card.set-card', {}, [
       el('h3', { text: 'Appearance' }),
-      el('p.hint', { text: 'Seven schemes. The button in the top bar cycles through them without coming here.' }),
+      el('p.hint', { text: 'The top two are the easy-on-the-eyes ones. The button in the top bar cycles through the lot without coming here.' }),
       themeRow,
       el('div.hr'),
       el('label.mini-item', { style: { cursor: 'pointer' } }, [
