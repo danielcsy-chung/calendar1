@@ -16,20 +16,33 @@ A study planner, to-do list and session timer in one page. No build step, no bac
    ```
 
 2. Go to vercel.com → **Add New → Project** → import the repo.
-3. Leave every build setting empty. Framework preset: **Other**. Build command: none. Output directory: none.
-4. Deploy.
+3. Framework preset: **Other**. Leave build command and output directory empty — Vercel serves the root as static files and turns `api/sync.js` into a function on its own.
+4. Deploy, then set up the blob store as described under Sync below.
 
-There is nothing to configure. To work on it locally, open `index.html` in a browser, or run `python3 -m http.server` in this folder.
+Opening `index.html` straight off disk works for everything except sync, which needs the function. For that, run `npx vercel dev` in this folder.
 
 ## Where your data lives
 
-In `localStorage`, under the key `calendar.v1`, in the browser you are using. That means:
+In `localStorage`, under the key `calendar.v1`, in the browser you are using. It survives refreshes and redeploys; clearing site data wipes it. Setup → Your data has **Export backup** and **Restore backup**.
 
-- It survives refreshes and redeploys.
-- It does **not** follow you to another device or another browser.
-- Clearing site data wipes it.
+To get it onto your phone, set up sync.
 
-Setup → Your data has **Export backup** and **Restore backup**. Use them.
+## Sync (Vercel Blob)
+
+One extra step at deploy time:
+
+1. In your Vercel project → **Storage** → **Create** → **Blob**, name the store **`ibcal-blob`**, and connect it to the project. Vercel injects `BLOB_READ_WRITE_TOKEN` automatically.
+2. Add an environment variable **`SYNC_SALT`** set to any long random string, then redeploy. This is what the sync code is hashed with — pick it once and never change it, because changing it orphans every existing backup.
+
+Then in the app: **Setup → Sync across devices → Set code**. Use something long (it generates one if you'd rather). On your phone, open the same Vercel URL, enter the same code, and tap **Load from code**. The code is saved in that browser, so it is a one-time thing per device.
+
+How it behaves:
+
+- Every local change queues a background push five seconds later, and a push is attempted when you close the tab.
+- On load, the app compares revisions: whichever device saved most recently wins. **There is no merging** — if you edit on your laptop while your phone is offline, the later save overwrites the earlier one.
+- Your code never reaches the blob store. The file is named after an HMAC of it, so the store shows only hashes.
+- Anyone with the code has your data. It is a password, not a username.
+- **Delete cloud copy** removes the blob and leaves the device untouched.
 
 ## Getting started
 
@@ -76,7 +89,7 @@ TODO,Maths AA HL,Exercise 7C q1-14,2026-09-02,,
 
 ## Appearance
 
-Seven UI schemes — Night, Ocean, Plum, Forest, Mono, Paper, Linen — under Setup → Appearance. The ◐ button in the top bar cycles them without opening Setup. Any scheme's accent can be overridden with your own colour, and the choice carries into the floating PiP window too.
+Seven schemes under Setup → Appearance. **Notebook** (warm graphite, cream ink) and **Carbon** (lowest glare, soft whites rather than pure white) are the two built for long sessions; then Night, Ocean, Forest, Mono, and Paper as the only light one. The ◐ button in the top bar cycles them. Any scheme's accent can be overridden with your own colour, and the choice carries into the floating PiP window too.
 
 Type is Bricolage Grotesque for headings, Karla for everything else, and IBM Plex Mono wherever a number is a time.
 
@@ -84,8 +97,11 @@ Type is Bricolage Grotesque for headings, Karla for everything else, and IBM Ple
 
 ```
 index.html          shell and script tags
-styles.css          all styling, both themes
+styles.css          all styling, every theme
+package.json        one dependency, for the sync function only
+api/sync.js         serverless endpoint: push / pull / forget via Vercel Blob
 js/store.js         state, persistence, time maths, CSV parser
+js/sync.js          client side of sync: revisions, auto-push, reconcile
 js/ui.js            element builder, modals, toasts
 js/dashboard.js     landing page
 js/todos.js         to-do list, editor, next-class due dates

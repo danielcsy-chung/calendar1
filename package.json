@@ -1,0 +1,10 @@
+{
+  "name": "ibcal",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Study planner, to-do list and session timer with Vercel Blob sync.",
+  "dependencies": {
+    "@vercel/blob": "^2.8.0"
+  }
+}

@@ -28,12 +28,20 @@ html[data-theme="ocean"]{
   --mist:#93b4bd; --mist-dim:#5f858f; --chalk:#e9f5f7;
   --amber:#49cfc2; --ember:#ff7f6f; --green:#8ad98e;
 }
-html[data-theme="plum"]{
+
+html[data-theme="notebook"]{
   color-scheme:dark;
-  --ink:#171020; --slate:#211829; --slate-2:#2e2139;
-  --rule:#43304f; --rule-soft:#2b1f36;
-  --mist:#b39fc4; --mist-dim:#7e6a8f; --chalk:#f6edfb;
-  --amber:#ff92bc; --ember:#ff6f6f; --green:#7bdca2;
+  --ink:#1a1816; --slate:#221f1c; --slate-2:#2b2723;
+  --rule:#3a352e; --rule-soft:#2c2822;
+  --mist:#a99c8a; --mist-dim:#7b7163; --chalk:#e9e1d3;
+  --amber:#d9a441; --ember:#d1695c; --green:#7fb287;
+}
+html[data-theme="carbon"]{
+  color-scheme:dark;
+  --ink:#121315; --slate:#191a1d; --slate-2:#212328;
+  --rule:#2e3137; --rule-soft:#232529;
+  --mist:#99a0a8; --mist-dim:#6a7178; --chalk:#dde1e6;
+  --amber:#8fb4d9; --ember:#d1756a; --green:#7dbd97;
 }
 html[data-theme="forest"]{
   color-scheme:dark;
@@ -58,14 +66,6 @@ html[data-theme="paper"]{
   --mist:#7c7061; --mist-dim:#a89c8c; --chalk:#2b241b;
   --amber:#c2701c; --ember:#c04034; --green:#2c8b5c;
   --shadow:0 8px 22px rgba(80,60,30,.13);
-}
-html[data-theme="linen"]{
-  color-scheme:light;
-  --ink:#edf0f5; --slate:#ffffff; --slate-2:#f4f6fa;
-  --rule:#d9dfe9; --rule-soft:#e8ecf3;
-  --mist:#636d7c; --mist-dim:#98a2b1; --chalk:#131a24;
-  --amber:#4a61d6; --ember:#cf4639; --green:#1d8c5f;
-  --shadow:0 8px 22px rgba(20,30,50,.11);
 }
 
 *{box-sizing:border-box}
@@ -414,7 +414,7 @@ html[data-light] .chip-btn.sel.neutral{background:#141a22;color:#fff;border-colo
 .heat i{aspect-ratio:1;border-radius:2px;background:var(--rule-soft)}
 
 /* ---------- appearance picker ---------- */
-.theme-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:9px}
+.theme-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:9px}
 .theme-card{
   border:1px solid var(--rule);background:var(--slate-2);border-radius:14px;padding:9px;
   cursor:pointer;display:flex;flex-direction:column;gap:7px;align-items:stretch;
@@ -425,6 +425,7 @@ html[data-light] .chip-btn.sel.neutral{background:#141a22;color:#fff;border-colo
 .theme-strip i{flex:1}
 .theme-name{font-size:11.5px;font-weight:600;color:var(--mist);text-align:left}
 .theme-card.on .theme-name{color:var(--chalk)}
+.theme-note{font-size:10px;color:var(--mist-dim);text-align:left;line-height:1.3}
 
 /* ---------- settings ---------- */
 .set-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;align-items:start}
